@@ -1,0 +1,13 @@
+# Python virtual environment
+venv/
+__pycache__/
+*.pyc
+
+# VS Code settings
+.vscode/
+
+# Environment secrets
+.env
+
+# Chroma DB files
+chroma_db/

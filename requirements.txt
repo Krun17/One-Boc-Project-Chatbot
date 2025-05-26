@@ -1,0 +1,12 @@
+pandas
+numpy
+streamlit
+openai
+langchain
+chromadb
+tqdm
+python-dotenv
+langchain-community
+openpyxl
+tiktoken
+langchain-community
