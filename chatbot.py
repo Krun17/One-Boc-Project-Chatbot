@@ -14,7 +14,7 @@ llm = ChatOpenAI(model='gpt-4', temperature=0.2, openai_api_key=openai_api_key)
 
 # === Prompt Template ===
 prompt_template = ChatPromptTemplate.from_template("""
-You are a retail KPI assistant. Below is the precomputed or raw KPI data for the selected store and date range:
+You are a smart retail KPI assistant. Below is the precomputed daily KPI data for the selected store and date range:
 
 {context}
 
@@ -22,16 +22,25 @@ The user has asked the following question:
 
 {query}
 
-Based on the provided data, respond with clear, concise, and actionable business-friendly insights.
-Do not assume any KPI values. Only use what's given in the context.
+🧠 Instructions:
+- If the user asks for **Sales**, use the `daily_sales` column.
+- If the user asks for **Sales Trend** or **how sales are moving**, use the precomputed `slope_daily_sales` value:
+  - A positive slope indicates an upward trend 📈
+  - A negative slope indicates a downward trend 📉
+  - A slope close to 0 indicates no significant trend ➖
+- If the user asks **why a KPI dropped or increased**, analyze related metrics (e.g., ABV, NOB, Availability, Complaints, Promotions) for that date and previous date.
+- Only refer to `net_sales` if the user says "MTD", "monthly", or mentions "total sales".
+- Use KPIs like `sales_picked_up`, `sales_dropped`, `is_highest_sales_day`, `abv_x_nob`, etc. to infer reasons.
+- If data for a specific date is missing, say so.
+- Keep answers:
+  - 🎯 Specific to the question
+  - 📊 Data-backed
+  - 🧾 Business-friendly and concise
 """)
 
+
+# === Final Response Agent ===
 def final_response_agent(query: str, retrieved_chunks: list, fallback_df: pd.DataFrame = None) -> str:
-    """
-    Takes user query and relevant retrieved chunks,
-    builds a structured prompt, and returns LLM response.
-    Falls back to ExecAgent if no chunks retrieved.
-    """
     if not retrieved_chunks:
         print("⚠️ No relevant chunks found. Using ExecAgent fallback.")
         if fallback_df is None:
@@ -39,17 +48,29 @@ def final_response_agent(query: str, retrieved_chunks: list, fallback_df: pd.Dat
         exec_agent = ExecAgent(df=fallback_df, llm=llm)
         return exec_agent.run(query)
 
+    # 🧩 Combine Chunks
     context = "\n\n".join(retrieved_chunks)
 
-    # 🔍 Debug: Print what will go to the LLM
-    print("\n[🧠 DEBUG] Prompt Context Sent to LLM:\n", context)
-    print("\n[🗣️ DEBUG] Query Sent to LLM:\n", query)
+    # 🔍 Debug: Print retrieved chunks clearly
+    print("\n====== 🔍 Retrieved Chunks Passed to LLM ======")
+    for i, chunk in enumerate(retrieved_chunks, 1):
+        print(f"\n--- Chunk {i} ---\n{chunk}")
+    print("==============================================\n")
 
-    # Format prompt and get LLM response
-    messages = prompt_template.format(query=query, context=context)
-    response = llm(messages)
+    # 🔧 Format prompt using LangChain's ChatPromptTemplate
+    prompt_value = prompt_template.format_prompt(query=query, context=context)
 
+    # 🧠 Debug print: print messages in structured format
+    print("\n====== 🧠 Structured Prompt Messages ======")
+    for msg in prompt_value.to_messages():
+        print(f"{msg.type.upper()}: {msg.content}")
+    print("==========================================\n")
+
+    # ✅ Send to LLM
+    response = llm.invoke(prompt_value.to_messages())
     return response.content
+
+
 
 # === CLI Test ===
 if __name__ == "__main__":

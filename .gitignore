@@ -11,3 +11,5 @@ __pycache__/
 
 # Chroma DB files
 chroma_db/
+
+Data/*.xlsx

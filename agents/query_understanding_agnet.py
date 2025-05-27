@@ -4,23 +4,24 @@ from datetime import datetime, timedelta
 
 # === KPI Synonym Map ===
 kpi_synonym_map = {
-    "net sales": "Net Sales",
-    "sales": "Net Sales",
-    "abv": "Average Bill Value",
-    "average bill value": "Average Bill Value",
-    "nob": "Number of Bills",
-    "number of bills": "Number of Bills",
-    "basket builder": "Basket Builder Availabilty",
-    "basket builder availability": "Basket Builder Availabilty",
-    "availability": "Availability",
-    "promotion": "Sales Promotion & Advertisement Cost",
-    "ad spend": "Sales Promotion & Advertisement Cost",
-    "advertisement cost": "Sales Promotion & Advertisement Cost",
-    "customer complaints": "Customer Complaints Resolved - Offline",
-    "offline complaints": "Customer Complaints Resolved - Offline",
-    "sla": "JioMart Delivery SLA Adherence",
-    "jiomart sla": "JioMart Delivery SLA Adherence"
+    "net sales": "daily_sales",  # ✅ Mapped to precomputed daily
+    "sales": "daily_sales",
+    "abv": "average_bill_value",
+    "average bill value": "average_bill_value",
+    "nob": "number_of_bills",
+    "number of bills": "number_of_bills",
+    "basket builder": "basket_builder_availability",
+    "basket builder availability": "basket_builder_availability",
+    "availability": "availability",
+    "promotion": "promotion_cost",
+    "ad spend": "promotion_cost",
+    "advertisement cost": "promotion_cost",
+    "customer complaints": "complaints_resolved_offline",
+    "offline complaints": "complaints_resolved_offline",
+    "sla": "jiomart_sla_adherence",
+    "jiomart sla": "jiomart_sla_adherence"
 }
+
 
 # === KPI Detection Function ===
 def detect_mentioned_kpis(query: str, kpi_synonym_map: dict) -> list:
