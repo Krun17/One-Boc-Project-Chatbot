@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from datetime import datetime
 import os
 
+# === Load environment variables ===
 load_dotenv()
 
 # === Initialize ChromaDB client and collection ===
@@ -16,10 +17,10 @@ collection = chroma_client.get_or_create_collection(
 
 # === Semantic Retrieval Function ===
 def retrieve_chunks_for_query(start_date, end_date, store_name, user_query=None, days_back=7):
-    # Step 1: Fetch a buffer of 50 results from ChromaDB
+    # Step 1: Fetch 20 results from ChromaDB directly
     raw_results = collection.query(
         query_texts=[user_query],
-        n_results=20,  # buffer — we will trim later
+        n_results=20,
         where={"store": store_name}
     )
 
@@ -28,26 +29,25 @@ def retrieve_chunks_for_query(start_date, end_date, store_name, user_query=None,
     for doc, meta in zip(raw_results.get("documents", [[]])[0], raw_results.get("metadatas", [[]])[0]):
         try:
             doc_date = datetime.strptime(meta["date"], "%Y-%m-%d").date()
+            print(f"start_date: {start_date}, end_date: {end_date}, doc_date: {doc_date}")
             if start_date <= doc_date <= end_date:
-                filtered_chunks.append((doc_date, doc))  # keep date for sorting
+                filtered_chunks.append(doc)
         except Exception as e:
             print(f"[⚠️] Skipping due to bad date format: {meta.get('date')} → {e}")
 
-    # Step 3: Sort by date and keep first 20 only
-    filtered_chunks.sort(key=lambda x: x[0])  # sort ascending by date
-    final_chunks = [doc for _, doc in filtered_chunks[:20]]  # max 20 for LLM
-
-    print(f"[🔍] Retrieved {len(final_chunks)} chunks from ChromaDB (after filtering & sorting).")
-    return final_chunks
+    print(f"[🔍] Retrieved {len(filtered_chunks)} chunks from ChromaDB (after date filtering).")
+    return filtered_chunks
 
 # === Optional Test Block ===
 if __name__ == "__main__":
     from datetime import date
+
     chunks = retrieve_chunks_for_query(
         start_date=date(2025, 2, 21),
         end_date=date(2025, 2, 28),
         store_name="GURUGRAM AMBI MALL",
         user_query="What are the sales and sales trend in the last 7 days?"
     )
-    for chunk in chunks:
-        print("\n---\n", chunk)
+
+    for i, chunk in enumerate(chunks, 1):
+        print(f"\n--- Chunk {i} ---\n{chunk}")
